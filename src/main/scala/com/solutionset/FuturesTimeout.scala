@@ -1,6 +1,5 @@
 package com.solutionset
 
-import akka.dispatch.{Future, Await}
 import akka.util.duration._
 
 import akka.actor.{ActorSystem, Props, Actor}
@@ -13,6 +12,8 @@ import scala.collection.immutable.Range.Long._
 import collection.immutable.NumericRange
 import akka.routing.{DefaultResizer, RoundRobinRouter}
 import com.typesafe.config.ConfigFactory
+import akka.dispatch.{ExecutionContext, Future, Await}
+import java.util.concurrent.Executors
 
 
 /**
@@ -81,10 +82,12 @@ class ActorB extends Actor {
   //implicit val timeout = Timeout(4 seconds)
   import context.dispatcher
 
+  implicit val executor = ExecutionContext.fromExecutorService(Executors.newCachedThreadPool())
+
   def receive = {
     case DoCalculateActorB => println("Putting actor ("+self.path.name+","+hashCode+") to sleep for 3500ms")
-    val future = Future {Thread.sleep(3500)}
-    Await.result(future, 6 seconds)
+    val future = Future {Thread.sleep(3500)}(executor)
+    Await.result(future, 4 seconds)
     println("Future in Actor  ("+self.path.name+","+hashCode+")is Done. Returning")
     sender ! DoneFromActorB(4)
   }
